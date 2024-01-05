@@ -28,7 +28,7 @@ from matplotlib.pyplot import imread, imshow, subplots, show
 #     plt.yticks([])
 #     plt.grid(False)
 #     plt.imshow(image_iterator.next()[0].astype('int'))
-# plt.show()
+# plt.show(S
 
 data = []
 
