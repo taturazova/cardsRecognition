@@ -43,11 +43,10 @@ for i, img in tqdm(enumerate(os.listdir("cards/"))):
     data_generator.fit(imgs)
     image_iterator = data_generator.flow(imgs)
 
-    for x in range(710):
+    for x in range(750):
         img_transformed = image_iterator.next()[0].astype("int") / 255
-        print(f"{img_transformed.shape[0]} {img_transformed.shape[1]}\n")
         data.append([img_transformed, label])
 
 shuffle(data)
 
-np.save("data.npy", data)
+np.save("data.npy", np.array(data, dtype=object))

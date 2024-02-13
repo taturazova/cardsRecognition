@@ -1,0 +1,70 @@
+import cv2
+import numpy as np
+import json
+from tensorflow import keras
+
+# Read card info
+with open('card_data.json', 'r') as file:
+    card_list = json.load(file)
+
+# Read Image
+image = cv2.imread("thefool.jpg")
+# convert the image to grayscale format
+img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+# apply binary thresholding
+ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY)
+
+# detect the contours on the binary image using cv2.CHAIN_APPROX_NONE
+contours, hierarchy = cv2.findContours(
+    image=thresh, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE
+)
+
+# draw contours on the original image for contours with no children
+image_copy = image.copy()
+roi = None
+for i, h in enumerate(hierarchy[0]):
+    if h[3] == -1:  # Contour has no children
+        cv2.drawContours(
+            image=image_copy,
+            contours=contours,
+            contourIdx=i,
+            color=(0, 255, 0),
+            thickness=2,
+            lineType=cv2.LINE_AA,
+        )
+        # Use polygon approximation to simplify the contour
+        epsilon = 0.02 * cv2.arcLength(contours[i], True)
+        approx = cv2.approxPolyDP(contours[i], epsilon, True)
+        # Check if the contour has four corners (quadrilateral)
+        area = cv2.contourArea(contours[i])
+        if len(approx) == 4 and area > 1000:
+            cv2.drawContours(
+                image=image_copy,
+                contours=contours,
+                contourIdx=i,
+                color=(0, 255, 0),
+                thickness=2,
+                lineType=cv2.LINE_AA,
+            )
+            rect = cv2.boundingRect(approx)
+            x, y, w, h = rect
+            roi = img_gray[y : y + h, x : x + w]
+
+
+roi=cv2.resize(roi, (180, 180))
+roi = roi.astype("float") / 255.0  # Normalize pixel values
+roi = np.reshape(roi, (1, roi.shape[0], roi.shape[1], 1))
+
+# Load the saved model from the .h5 file
+model = keras.models.load_model('2epochs_conv.h5')  
+
+# Make predictions using the loaded model
+predictions = model.predict(roi)
+
+# Decode the predictions (assuming your model output is categorical)
+class_index = np.argmax(predictions)
+
+
+# Print the predicted class
+print(f'Predicted Class: {card_list[class_index]["name"]}\nCard Meaning: {card_list[class_index]["keywords"]}')
