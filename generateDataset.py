@@ -57,7 +57,7 @@ for i, img in tqdm(enumerate(images)):
         height_shift_range=0,
         shear_range=0.2,
         zoom_range=0,
-        horizontal_flip=False,
+        horizontal_flip=True,
         vertical_flip=False,
         brightness_range=[0.2, 2],
     )
@@ -66,6 +66,9 @@ for i, img in tqdm(enumerate(images)):
 
     for x in tqdm(range(750)):
         img_transformed = image_iterator.__next__()[0].astype("int") / 255
+        for blur_size in range(3, 10, 2):
+            img_blurred = cv2.GaussianBlur(img_transformed, (blur_size, blur_size), 0)
+            data.append([img_blurred, label])
         data.append([img_transformed, label])
 
 
